@@ -38,7 +38,7 @@ describe('新手逐步操作与四轮下注',()=>{
    expect(stored().pot+stored().players.reduce((sum,p)=>sum+p.chips,0)).toBe(9000);
   }
   expect([...streets]).toEqual(['preflop','flop','turn','river']);expect(actions).toBe(4);
-  expect(stored().handOver).toBe(true);expect(el.textContent).toContain('本手结束 · 已完成派奖');
+  expect(stored().handOver).toBe(true);expect(el.textContent).toContain('本手结束 · 已完成派奖');expect(el.querySelector('[aria-label="复盘速览"]')).toBeTruthy();expect(el.querySelector('[aria-label="本手即时复盘"]')?.contains(document.activeElement)).toBe(true);expect(el.textContent).toContain('主池');
   expect(el.querySelectorAll('.review tbody tr')).toHaveLength(4);
   await click('继续下一手');expect(stored().hand).toBe(2);expect(stored().handOver).toBe(false);
  });

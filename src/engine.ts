@@ -9,7 +9,7 @@ export function cardText(c:Card){return `${c.rank==='T'?'10':c.rank}${suitName[c
 export type Action='fold'|'check'|'call'|'bet'|'raise'|'allin';
 export type Player={id:number;name:string;chips:number;cards:Card[];folded:boolean;allIn:boolean;style:'tight'|'loose';bet:number;total:number;startChips:number};
 export type Decision={street:string;player:number;action:Action;paid:number;toCall:number;potBefore:number;eligiblePotBefore:number;target:number;board:Card[]};
-export type TableState={version:2;players:Player[];board:Card[];pot:number;street:'preflop'|'flop'|'turn'|'river'|'showdown';button:number;smallSeat:number;bigSeat:number;actor:number;currentBet:number;minRaise:number;handBig:number;elapsed:number;log:string[];deck:Card[];acted:number[];actedAt:Record<number,number>;handOver:boolean;hand:number;seed:number;decisions:Decision[];result:string[]};
+export type TableState={version:2;players:Player[];board:Card[];pot:number;street:'preflop'|'flop'|'turn'|'river'|'showdown';button:number;smallSeat:number;bigSeat:number;actor:number;currentBet:number;minRaise:number;handBig:number;elapsed:number;log:string[];deck:Card[];acted:number[];actedAt:Record<number,number>;handOver:boolean;hand:number;seed:number;decisions:Decision[];result:string[];pots?:{amount:number;eligible:number[];awards:{player:number;amount:number}[]}[]};
 function next(t:TableState,p:number,eligible:(p:Player)=>boolean){for(let i=1;i<=t.players.length;i++){const q=(p+i)%t.players.length;if(eligible(t.players[q]))return q}return -1}
 const active=(p:Player)=>!p.folded&&!p.allIn;
 export function initialTable(seed=7):TableState{
@@ -19,7 +19,7 @@ export function initialTable(seed=7):TableState{
 function pay(t:TableState,p:number,amount:number){const v=t.players[p];const n=Math.min(amount,v.chips);v.chips-=n;v.bet+=n;v.total+=n;t.pot+=n;v.allIn=v.chips===0;return n}
 export function startHand(t:TableState,rotate=true):TableState{
  const n=structuredClone(t);if(!n.handOver||n.players.filter(p=>p.chips>0).length<2||n.elapsed>=3600)return n;
- if(rotate)n.button=next(n,n.button,p=>p.chips>0);n.hand++;n.handOver=false;n.street='preflop';n.board=[];n.pot=0;n.decisions=[];n.result=[];n.acted=[];n.actedAt={};n.log=[`第 ${n.hand} 手开始`];n.deck=shuffle(makeDeck(),n.seed+n.hand);
+ if(rotate)n.button=next(n,n.button,p=>p.chips>0);n.hand++;n.handOver=false;n.street='preflop';n.board=[];n.pot=0;n.decisions=[];n.result=[];n.pots=[];n.acted=[];n.actedAt={};n.log=[`第 ${n.hand} 手开始`];n.deck=shuffle(makeDeck(),n.seed+n.hand);
  for(const p of n.players){p.startChips=p.chips;p.bet=0;p.total=0;p.folded=p.chips===0;p.allIn=false;p.cards=p.folded?[]:n.deck.splice(0,2)}
  const b=blinds(n.elapsed);n.handBig=b.big;n.minRaise=b.big;n.currentBet=b.big;
  n.smallSeat=n.players.filter(p=>!p.folded).length===2?n.button:next(n,n.button,p=>!p.folded);n.bigSeat=next(n,n.smallSeat,p=>!p.folded);
@@ -38,11 +38,13 @@ function settle(t:TableState){
  // Return the unique unmatched contribution before constructing pots.
  const sorted=[...t.players].sort((a,b)=>b.total-a.total);if(sorted[0].total>sorted[1].total){const v=sorted[0],refund=v.total-sorted[1].total;v.total-=refund;v.chips+=refund;t.pot-=refund;t.log.push(`${v.name} 未被跟注的 ${refund} 退回`)}
  const live=t.players.filter(p=>!p.folded);const solved=new Map<number,any>();if(live.length>1){while(t.board.length<5)t.board.push(t.deck.shift()!);for(const p of live)solved.set(p.id,solver.Hand.solve([...p.cards,...t.board].map(c=>c.rank+c.suit)))}
+ t.pots=[];
  const levels=[...new Set(t.players.map(p=>p.total).filter(Boolean))].sort((a,b)=>a-b);let last=0;
  for(const level of levels){const contributors=t.players.filter(p=>p.total>=level);const amount=(level-last)*contributors.length;last=level;const eligible=live.filter(p=>p.total>=level);if(!eligible.length)throw new Error('底池无合资格玩家');
  const hands=eligible.map(p=>solved.get(p.id));const winning=live.length===1?eligible:eligible.filter(p=>solver.Hand.winners(hands).includes(solved.get(p.id)));
- const order=winning.sort((a,b)=>((a.id-t.button+9)%9||9)-((b.id-t.button+9)%9||9));const share=Math.floor(amount/order.length);let odd=amount%order.length;
- for(const p of order){const gain=share+(odd-->0?1:0);p.chips+=gain;t.result.push(`${p.name} 获得 ${gain}${live.length>1?'（'+rankLabel([...p.cards,...t.board])+'）':''}`)}
+ const order=winning.sort((a,b)=>((a.id-t.button+9)%9||9)-((b.id-t.button+9)%9||9));const share=Math.floor(amount/order.length);let odd=amount%order.length;const awards:{player:number;amount:number}[]=[];
+ for(const p of order){const gain=share+(odd-->0?1:0);p.chips+=gain;awards.push({player:p.id,amount:gain});t.result.push(`${p.name} 获得 ${gain}${live.length>1?'（'+rankLabel([...p.cards,...t.board])+'）':''}`)}
+ t.pots.push({amount,eligible:eligible.map(p=>p.id),awards});
  }
  t.pot=0;t.handOver=true;t.street='showdown';t.actor=-1;t.log.push(...t.result,'本手已结算；筹码已派奖。');
 }
@@ -91,3 +93,5 @@ export const drills=[
  ['比赛','正在一手中达到10分钟，下一级40/20何时生效？',['立刻补扣','下一手开始','必须等20分钟','永不生效'],1,'本训练器新盲注从下一手生效，不在进行中的一手中途改价。'],
  ['比赛','60分钟已到但当前手未结束，按已确认训练假设怎么办？',['直接没收底池','完成当前手再排名','再打10手','按底牌排名'],1,'完成当前手并派奖后按筹码排名，不再发新手；这是训练假设，官方规则待确认。']
 ] as const;
+
+export function bestFive(cards:Card[]):Card[]{if(cards.length<5)return [];const hand=solver.Hand.solve(cards.map(c=>c.rank+c.suit));return hand.cards.slice(0,5).map((c:any)=>({rank:c.value==='1'?'A':c.value==='10'?'T':c.value,suit:c.suit}));}

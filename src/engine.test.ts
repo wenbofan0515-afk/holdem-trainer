@@ -15,3 +15,18 @@ describe('完整一手及连续牌局',()=>{
  it('双人庄家小盲先行动，翻牌后大盲先行动',()=>{let t=finish(initialTable());t.players.forEach(p=>p.chips=0);t.players[0].chips=4500;t.players[4].chips=4500;t=startHand(t);expect(t.smallSeat).toBe(t.button);expect(t.actor).toBe(t.button);t=applyAction(t,t.actor,'call');t=applyAction(t,t.actor,'check');expect(t.actor).toBe(t.bigSeat)});
  it('升盲下一手生效且到点不新开',()=>{expect([0,600,1200,1800].map(x=>blinds(x).big)).toEqual([20,40,80,100]);let t=initialTable();t.elapsed=600;expect(t.handBig).toBe(20);t=finish(t);expect(startHand(t).handBig).toBe(40);t.elapsed=3600;expect(startHand(t).hand).toBe(t.hand)});
 });
+
+import {bestFive} from './engine';
+it('复盘最佳5张保留A小顺的真实A，且分池记录派奖守恒、下一手清空',()=>{
+ const cards=[{rank:'A',suit:'s'},{rank:'2',suit:'h'},{rank:'3',suit:'d'},{rank:'4',suit:'c'},{rank:'5',suit:'s'},{rank:'K',suit:'h'},{rank:'Q',suit:'c'}] as any;
+ const best=bestFive(cards);expect(best).toHaveLength(5);expect(best.some(c=>c.rank==='A')).toBe(true);expect(best.every(c=>cards.some((x:any)=>x.rank===c.rank&&x.suit===c.suit))).toBe(true);
+ let t=initialTable(17);t.players[3].chips=80;t.players[4].chips=180;t.players[5].chips+=1740;t=finish(t,true);
+ expect(t.pots!.length).toBeGreaterThan(1);for(const p of t.pots!){expect(p.awards.reduce((n,a)=>n+a.amount,0)).toBe(p.amount);expect(p.awards.every(a=>p.eligible.includes(a.player))).toBe(true)}
+ expect(t.pots!.reduce((n,p)=>n+p.amount,0)).toBe(t.players.reduce((n,p)=>n+p.total,0));
+ expect(startHand(t).pots).toEqual([]);
+});
+
+it('六张同花仅展示最强五张，剔除最低同花牌',()=>{
+ const cards=[{rank:'A',suit:'s'},{rank:'Q',suit:'s'},{rank:'J',suit:'s'},{rank:'9',suit:'s'},{rank:'5',suit:'s'},{rank:'2',suit:'s'},{rank:'J',suit:'d'}] as any;
+ const best=bestFive(cards);expect(best).toHaveLength(5);expect(best.map(c=>c.rank)).toEqual(['A','Q','J','9','5']);
+});
