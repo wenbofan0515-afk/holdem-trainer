@@ -1,8 +1,9 @@
 import React,{useState} from 'react';
 import {drills} from './engine';
 import {Page} from './ui';
-export type Progress={wrong:number[];answered:Record<string,boolean>};
-export function loadProgress():Progress{try{const p=JSON.parse(localStorage.getItem('holdem-progress')||'{}');return {wrong:Array.isArray(p.wrong)?[...new Set<number>(p.wrong.filter((n:number)=>Number.isInteger(n)&&n>=0&&n<drills.length))]:[],answered:p.answered||{}}}catch{return {wrong:[],answered:{}}}}
+import {loadProgress} from './learning';
+export {loadProgress} from './learning';
+export type {Progress} from './learning';
 export function Drill({back,initialIds,sourceLabel}:{back:()=>void;initialIds?:number[];sourceLabel?:string}){
  const [progress,setProgress]=useState(loadProgress),[mode,setMode]=useState<'all'|'wrong'|'target'>(initialIds?.length?'target':'all'),[i,setI]=useState(0),[choice,setChoice]=useState<number|null>(null),[done,setDone]=useState(false);
  const [queue,setQueue]=useState(()=>initialIds?.length?[...new Set(initialIds)].filter(id=>Number.isInteger(id)&&id>=0&&id<drills.length):drills.map((_,j)=>j));const id=queue[i],q=drills[id];
