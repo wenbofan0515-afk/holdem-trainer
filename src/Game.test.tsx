@@ -132,3 +132,12 @@ it('填入最大加注目标也需要全下确认，取消不扣筹码',async()=
  await act(async()=>{Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value')!.set!.call(input,String(engine.actionInfo(t,0).maxTo));input.dispatchEvent(new Event('input',{bubbles:true}))});
  await click('加注到');expect(el.querySelector('[aria-label="确认全下"]')).not.toBeNull();expect(stored().players[0].chips).toBe(t.players[0].chips);await click('取消全下');expect(stored().players[0].chips).toBe(t.players[0].chips);
 });
+it('复盘练习返回保留确认、速度、原手筹码和回放位置，并保持暂停',async()=>{
+ const t=ended(initialTable());await mount(t);await confirm();await click('速度 1x');
+ const summary=[...el.querySelectorAll('summary')].find(s=>s.textContent==='逐步回放本手行动')!;await act(async()=>summary.click());await click('查看结算');
+ const trigger=[...el.querySelectorAll('button')].find(b=>b.textContent?.includes('巩固本手知识点'))!;
+ await act(async()=>trigger.click());expect(el.querySelector('[hidden]')).not.toBeNull();
+ const visiblePage=[...el.querySelectorAll('main')].find(p=>!p.closest('[hidden]'))!;const back=[...visiblePage.parentElement!.querySelectorAll('button')].find(b=>b.textContent==='← 返回')!;
+ await act(async()=>back.click());expect(el.querySelector('[hidden]')).toBeNull();expect(el.querySelector('.confirm')).toBeNull();expect(el.textContent).toContain('速度 5x');expect((summary.parentElement as HTMLDetailsElement).open).toBe(true);expect(el.textContent).toContain('逐步回放 · 最终结算');expect(document.activeElement).toBe(trigger);
+ const before=stored();await tick(5000);expect(stored()).toEqual(before);expect(before.players.map(p=>p.chips)).toEqual(t.players.map(p=>p.chips));
+});
