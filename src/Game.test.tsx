@@ -106,3 +106,23 @@ describe('集中行动区',()=>{
   await click('跟注补');await click('确认全下 10');expect(stored().players[0].allIn).toBe(true);expect(stored().players[0].chips).toBe(0);
  });
 });
+
+describe('引导、反馈与重点复盘',()=>{
+ it('引导跟随确认和开局，跳过持久化且可以重新开启',async()=>{
+  let t=initialTable(456);while(t.actor!==0)t=applyAction(t,t.actor,legalActions(t).includes('check')?'check':'call');
+  await mount(t);expect(el.querySelector('[aria-label="首手学习引导"]')?.textContent).toContain('1/5');
+  await confirm();expect(el.querySelector('[aria-label="首手学习引导"]')?.textContent).toContain('2/5');
+  await click('开始 / 继续');expect(el.querySelector('[aria-label="首手学习引导"]')?.textContent).toContain('3/5');
+  await click('跟注补');expect(el.querySelector('[aria-label="操作已提交"]')?.textContent).toContain('本次投入 20');
+  expect(el.querySelector('[aria-label="操作已提交"]')?.textContent).toContain('无需重复点击');
+  await click('跳过引导');expect(localStorage.getItem('holdem-guide-complete')).toBe('1');expect(el.querySelector('[aria-label="首手学习引导"]')).toBeNull();
+  await click('重新查看引导');expect(el.querySelector('[aria-label="首手学习引导"]')).toBeTruthy();
+ });
+ it('结束显示重点复盘并支持完成引导，下一手清除上手操作反馈',async()=>{
+  await mount(ended(initialTable(456)));await confirm();
+  expect(el.querySelector('[aria-label="首手学习引导"]')?.textContent).toContain('5/5');
+  expect(el.querySelector('[aria-label="关键决策复盘"] article')).toBeTruthy();
+  await click('完成引导');await click('继续下一手');
+  expect(el.querySelector('[aria-label="我的行动区"] [aria-label="操作已提交"]')).toBeNull();
+ });
+});
