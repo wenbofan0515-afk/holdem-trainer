@@ -18,3 +18,10 @@ it('回放不提前显示未来公牌，导航有限，跳至结算且不修改�
  await click('上一步');expect(el.textContent).not.toContain('派奖完成');expect(JSON.stringify(t)).toBe(original);
  await act(async()=>root.unmount());
 });
+it('只看我的决策跳过电脑行动，仍可回到完整行动顺序',async()=>{
+ const t=initialTable(42);let ended=t;while(!ended.handOver)ended=applyAction(ended,ended.actor,legalActions(ended).includes('check')?'check':'call');
+ const el=document.createElement('div'),root=createRoot(el);await act(async()=>root.render(<HandReplay t={ended}/>));
+ const filter=el.querySelector('input[type=checkbox]') as HTMLInputElement;await act(async()=>filter.click());expect(el.querySelector('.replay-mine')).not.toBeNull();
+ const select=el.querySelector('select')!;expect(select.options).toHaveLength(ended.decisions.filter(d=>d.player===0).length+1);
+ await act(async()=>filter.click());expect(select.options).toHaveLength(ended.decisions.length+1);await act(async()=>root.unmount());
+});
