@@ -84,3 +84,25 @@ describe('操作减负与防误触',()=>{
   await click('全下 1000');await click('确认全下 1000');expect(stored().players[0].chips).toBe(0);
  });
 });
+
+
+describe('集中行动区',()=>{
+ it('轮到自己聚焦行动区，牌面与按钮在同一区域，结算仅一个下一手入口',async()=>{
+  let t=initialTable(456);while(t.actor!==0)t=applyAction(t,t.actor,legalActions(t).includes('check')?'check':'call');
+  await mount(t);await confirm();await click('开始 / 继续');
+  const panel=el.querySelector('[aria-label="我的行动区"]')!;
+  expect(panel.classList.contains('your-turn')).toBe(true);expect(document.activeElement).toBe(panel);
+  expect(panel.querySelectorAll('.decision-cards .card')).toHaveLength(2);
+  expect(panel.textContent).toContain('跟齐需补');expect(panel.querySelector('details.bet-settings')?.hasAttribute('open')).toBe(false);
+  expect(panel.compareDocumentPosition(el.querySelector('.table')!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  await act(async()=>root.unmount());root=createRoot(el);await mount(ended(initialTable(456)));
+  expect([...el.querySelectorAll('button')].filter(b=>b.textContent?.includes('继续下一手（'))).toHaveLength(1);
+ });
+ it('跟注需投入全部筹码时也须确认，取消不扣筹码',async()=>{
+  let t=initialTable(456);while(t.actor!==0)t=applyAction(t,t.actor,legalActions(t).includes('check')?'check':'call');
+  t.players[0].chips=10;await mount(t);await confirm();await click('开始 / 继续');const before=stored();
+  await click('跟注补');expect(stored()).toEqual(before);expect(el.textContent).toContain('确认投入全部 10');
+  await click('取消全下');expect(stored()).toEqual(before);
+  await click('跟注补');await click('确认全下 10');expect(stored().players[0].allIn).toBe(true);expect(stored().players[0].chips).toBe(0);
+ });
+});
