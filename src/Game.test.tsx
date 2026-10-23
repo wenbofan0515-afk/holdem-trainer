@@ -141,3 +141,9 @@ it('复盘练习返回保留确认、速度、原手筹码和回放位置，并�
  await act(async()=>back.click());expect(el.querySelector('[hidden]')).toBeNull();expect(el.querySelector('.confirm')).toBeNull();expect(el.textContent).toContain('速度 5x');expect((summary.parentElement as HTMLDetailsElement).open).toBe(true);expect(el.textContent).toContain('逐步回放 · 最终结算');expect(document.activeElement).toBe(trigger);
  const before=stored();await tick(5000);expect(stored()).toEqual(before);expect(before.players.map(p=>p.chips)).toEqual(t.players.map(p=>p.chips));
 });
+it('全下待确认时修改金额会取消旧确认，暂停不能提交',async()=>{
+ let t=initialTable();while(t.actor!==0)t=applyAction(t,t.actor,'call');await mount(t);await confirm();await click('开始 / 继续');await click('全下 ');expect(el.querySelector('[aria-label="确认全下"]')).not.toBeNull();
+ const input=el.querySelector('[aria-label="下注或加注目标"]') as HTMLInputElement;
+ await act(async()=>{Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value')!.set!.call(input,'60');input.dispatchEvent(new Event('input',{bubbles:true}))});
+ expect(el.querySelector('[aria-label="确认全下"]')).toBeNull();await click('暂停学习');const before=stored();await click('加注到');expect(stored()).toEqual(before);
+});
