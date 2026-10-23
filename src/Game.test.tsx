@@ -51,3 +51,24 @@ describe('新手逐步操作与四轮下注',()=>{
   expect([...el.querySelectorAll('button')].find(b=>b.textContent?.startsWith('跟注补'))?.disabled).toBe(false);
  });
 });
+
+describe('六种合法动作逐项验收',()=>{
+ for(const action of ['fold','call','raise','allin','check','bet'] as const){
+  it(`${action} 通过真实按钮写入动作记录且守恒`,async()=>{
+   let t=initialTable(456);
+   while(t.actor!==0)t=applyAction(t,t.actor,legalActions(t).includes('check')?'check':'call');
+   if(action==='check'||action==='bet'){
+    while(t.street==='preflop')t=applyAction(t,t.actor,legalActions(t).includes('check')?'check':'call');
+    while(t.actor!==0)t=applyAction(t,t.actor,'check');
+   }
+   await mount(t);await confirm();await click('开始 / 继续');
+   const labels={fold:'弃牌 ·',call:'跟注补',raise:'加注到',allin:'全下 ',check:'过牌 ·',bet:'下注到'};
+   await click(labels[action]);
+   const after=stored();const ds=after.decisions.filter(d=>d.player===0);const d=ds[ds.length-1];
+   expect(d?.action).toBe(action);expect(after.pot+after.players.reduce((n,p)=>n+p.chips,0)).toBe(9000);
+   expect(after.decisions.length).toBe(t.decisions.length+1);
+   if(action==='fold')expect(after.players[0].folded).toBe(true);
+   if(action==='allin')expect(after.players[0].chips).toBe(0);
+  });
+ }
+});

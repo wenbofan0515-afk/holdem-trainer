@@ -1,0 +1,30 @@
+[
+  {
+    "scenario": "call-check",
+    "data": "{\"operation\":\"INPUT\",\"paintMs\":15.6}\n{\"operation\":\"INPUT\",\"paintMs\":11.6}\n{\"operation\":\"开始 / 继续\",\"paintMs\":16}\n{\"operation\":\"跟注补 20只补差额\",\"paintMs\":10.3}\n{\"operation\":\"过牌 · 免费不增加投入\",\"paintMs\":13.1}\n"
+  },
+  {
+    "scenario": "full-hand",
+    "data": "{\"operation\":\"INPUT\",\"paintMs\":15.6}\n{\"operation\":\"INPUT\",\"paintMs\":11.6}\n{\"operation\":\"开始 / 继续\",\"paintMs\":16}\n{\"operation\":\"跟注补 20只补差额\",\"paintMs\":10.3}\n{\"operation\":\"过牌 · 免费不增加投入\",\"paintMs\":13.1}\n{\"operation\":\"过牌 · 免费不增加投入\",\"paintMs\":11.5}\n{\"operation\":\"过牌 · 免费不增加投入\",\"paintMs\":36.9}\n{\"operation\":\"查看摊牌玩家底牌与牌型\",\"paintMs\":18.2}\n{\"operation\":\"完整行动与结算记录（36 次行动）\",\"paintMs\":11.4}\n"
+  },
+  {
+    "scenario": "controls",
+    "data": "{\"operation\":\"INPUT\",\"paintMs\":15.6}\n{\"operation\":\"INPUT\",\"paintMs\":11.6}\n{\"operation\":\"开始 / 继续\",\"paintMs\":16}\n{\"operation\":\"跟注补 20只补差额\",\"paintMs\":10.3}\n{\"operation\":\"过牌 · 免费不增加投入\",\"paintMs\":13.1}\n{\"operation\":\"过牌 · 免费不增加投入\",\"paintMs\":11.5}\n{\"operation\":\"过牌 · 免费不增加投入\",\"paintMs\":36.9}\n{\"operation\":\"查看摊牌玩家底牌与牌型\",\"paintMs\":18.2}\n{\"operation\":\"完整行动与结算记录（36 次行动）\",\"paintMs\":11.4}\n{\"operation\":\"继续下一手（庄家和盲注轮转）\",\"paintMs\":12.2}\n{\"operation\":\"暂停学习\",\"paintMs\":17.2}\n{\"operation\":\"速度 1x\",\"paintMs\":11.1}\n{\"operation\":\"教学辅助：关\",\"paintMs\":14.3}\n{\"operation\":\"重新开一场（替换当前进度）\",\"paintMs\":9.9}\n{\"operation\":\"取消\",\"paintMs\":12.8}\n"
+  },
+  {
+    "scenario": "raise",
+    "data": "{\"operation\":\"INPUT\",\"paintMs\":11.3}\n{\"operation\":\"INPUT\",\"paintMs\":9.7}\n{\"operation\":\"开始 / 继续\",\"paintMs\":12.5}\n{\"operation\":\"加注到 40额外投入 40\",\"paintMs\":15.7}\n"
+  },
+  {
+    "scenario": "bet",
+    "data": "{\"operation\":\"INPUT\",\"paintMs\":12}\n{\"operation\":\"INPUT\",\"paintMs\":13.8}\n{\"operation\":\"开始 / 继续\",\"paintMs\":14.6}\n{\"operation\":\"下注到 20额外投入 20\",\"paintMs\":15.5}\n"
+  },
+  {
+    "scenario": "fold",
+    "data": "{\"operation\":\"INPUT\",\"paintMs\":10.7}\n{\"operation\":\"INPUT\",\"paintMs\":12.2}\n{\"operation\":\"开始 / 继续\",\"paintMs\":12.1}\n{\"operation\":\"弃牌 · 退出本手已投入不退\",\"paintMs\":18.3}\n"
+  },
+  {
+    "scenario": "allin",
+    "data": "{\"operation\":\"INPUT\",\"paintMs\":12.9}\n{\"operation\":\"INPUT\",\"paintMs\":13.2}\n{\"operation\":\"开始 / 继续\",\"paintMs\":11.8}\n{\"operation\":\"全下 1000本轮累计到 1000\",\"paintMs\":10.5}\n"
+  }
+]
