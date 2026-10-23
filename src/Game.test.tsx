@@ -126,3 +126,9 @@ describe('引导、反馈与重点复盘',()=>{
   expect(el.querySelector('[aria-label="我的行动区"] [aria-label="操作已提交"]')).toBeNull();
  });
 });
+it('填入最大加注目标也需要全下确认，取消不扣筹码',async()=>{
+ let t=initialTable();while(t.actor!==0)t=applyAction(t,t.actor,'call');await mount(t);await confirm();await click('开始 / 继续');
+ const input=el.querySelector('[aria-label="下注或加注目标"]') as HTMLInputElement;
+ await act(async()=>{Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value')!.set!.call(input,String(engine.actionInfo(t,0).maxTo));input.dispatchEvent(new Event('input',{bubbles:true}))});
+ await click('加注到');expect(el.querySelector('[aria-label="确认全下"]')).not.toBeNull();expect(stored().players[0].chips).toBe(t.players[0].chips);await click('取消全下');expect(stored().players[0].chips).toBe(t.players[0].chips);
+});

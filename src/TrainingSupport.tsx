@@ -16,9 +16,10 @@ export function decisionTakeaways(decisions:Decision[]){
   return {title,kind:'规则回顾',body:'当时无需补筹码，你选择免费过牌。下次注意：若同轮后续有人下注，仍需重新跟、加或弃；过牌不保证免费看到下一张。'};
  });
 }
-export function KeyDecisions({t}:{t:TableState}){
+export function practiceForAction(action:string):number[]{return action==='call'?[5,13]:action==='allin'?[14,7]:['raise','bet'].includes(action)?[6,7]:action==='check'?[0,15]:[0,13]}
+export function KeyDecisions({t,onPractice}:{t:TableState;onPractice?:(ids:number[])=>void}){
  const tips=decisionTakeaways(t.decisions);
- return <section className="key-decisions" aria-label="关键决策复盘"><h3>这手记住 {tips.length?`${tips.length} 个重点`:'这一点'}</h3>{tips.length?tips.map((tip,k)=><article key={k}><span className="tip-kind">{tip.kind}</span><b>{tip.title}</b><p>{tip.body}</p></article>):<p>本手没有你的主动决策，盲注或观战不算主动操作。</p>}<small>仅依据你当时的操作与公开下注条件，不读取对手隐藏底牌，不给未经求解的“最优操作”评分。</small></section>;
+ return <section className="key-decisions" aria-label="关键决策复盘"><h3>这手记住 {tips.length?`${tips.length} 个重点`:'这一点'}</h3>{tips.length?tips.map((tip,k)=><article key={k}><span className="tip-kind">{tip.kind}</span><b>{tip.title}</b><p>{tip.body}</p></article>):<p>本手没有你的主动决策，盲注或观战不算主动操作。</p>}<div>{onPractice&&tips.length>0&&<button onClick={()=>onPractice([...new Set(t.decisions.filter(d=>d.player===0).flatMap(d=>practiceForAction(d.action)))].slice(0,4))}>巩固本手知识点（最多 4 题）</button>}<p>对应练习用于知识巩固，不代表你的操作有错。</p></div><small>仅依据你当时的操作与公开下注条件，不读取对手隐藏底牌，不给未经求解的“最优操作”评分。</small></section>;
 }
 export function ActionFeedback({t,running}:{t:TableState;running:boolean}){
  const mine=t.decisions.filter(d=>d.player===0),d=mine[mine.length-1];

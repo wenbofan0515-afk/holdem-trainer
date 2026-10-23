@@ -30,3 +30,15 @@ it('六张同花仅展示最强五张，剔除最低同花牌',()=>{
  const cards=[{rank:'A',suit:'s'},{rank:'Q',suit:'s'},{rank:'J',suit:'s'},{rank:'9',suit:'s'},{rank:'5',suit:'s'},{rank:'2',suit:'s'},{rank:'J',suit:'d'}] as any;
  const best=bestFive(cards);expect(best).toHaveLength(5);expect(best.map(c=>c.rank)).toEqual(['A','Q','J','9','5']);
 });
+it('混合合法动作压力测试：最小加注、全额加注、全下和弃牌均保持守恒并有限结束',()=>{
+ const seen=new Set<string>();
+ for(let seed=1;seed<=40;seed++){
+  let t=initialTable(seed),rng=seed;
+  for(let hand=0;hand<6;hand++){
+   let steps=0;
+   while(!t.handOver){expect(++steps).toBeLessThan(300);rng=(rng*1664525+1013904223)>>>0;const acts=legalActions(t),a=acts[Math.floor((rng/4294967296)*acts.length)],info=actionInfo(t);seen.add(a);t=applyAction(t,t.actor,a,rng%2?info.minTo:info.maxTo);invariant(t)}
+   if(t.players.filter(p=>p.chips>0).length<2)break;t=startHand(JSON.parse(JSON.stringify(t)));invariant(t);
+  }
+ }
+ for(const a of ['fold','call','check','raise','bet','allin'])expect(seen.has(a)).toBe(true);
+});
