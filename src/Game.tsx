@@ -3,6 +3,7 @@ import{actionInfo,actionName,streetName,startHand,computerAction,Action,applyAct
 import{MatchClock,advanceClock,matchStatus,matchFinished,matchReport,rememberReport,MatchReport}from'./match';
 import{MatchResult}from'./MatchResult';
 import{Card,Page}from'./ui';
+import{ReviewHistory}from'./ReviewHistory';
 import{Drill}from'./Drill';
 import{HandReplay}from'./HandReplay';
 import{ReviewSummary}from'./ReviewSummary';
@@ -56,6 +57,6 @@ export function Game({back}:{back:()=>void}){
  <div className="log">{t.log.slice(-6).map((l,k)=><div key={k}>{l}</div>)}</div>
 
  {reports.filter(r=>r.seed!==t.seed).length>0&&<details className="result-history"><summary>历史比赛结果（本机保留最近 10 场）</summary>{reports.filter(r=>r.seed!==t.seed).slice().reverse().map(r=><MatchResult key={r.id} report={r}/>)}</details>}
- {reviews.filter(r=>r.hand!==t.hand||r.seed!==t.seed).length>0&&<details><summary>历史复盘（本机保留最近 20 手）</summary>{reviews.filter(r=>r.hand!==t.hand||r.seed!==t.seed).slice().reverse().map(r=><React.Fragment key={`${r.seed}-${r.hand}`}>{review(r)}</React.Fragment>)}</details>}
+ <ReviewHistory reviews={reviews.filter(r=>r.hand!==t.hand||r.seed!==t.seed)} renderReview={review}/>
  </Page></div>{practice&&<Drill initialIds={practice.ids} sourceLabel={practice.label} returnLabel="本手复盘" back={()=>setPractice(null)}/>}</>
 }
