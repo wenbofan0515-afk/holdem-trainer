@@ -56,5 +56,5 @@ export function Game({back}:{back:()=>void}){
 
  {reports.filter(r=>r.seed!==t.seed).length>0&&<details className="result-history"><summary>历史比赛结果（本机保留最近 10 场）</summary>{reports.filter(r=>r.seed!==t.seed).slice().reverse().map(r=><MatchResult key={r.id} report={r}/>)}</details>}
  {reviews.filter(r=>r.hand!==t.hand||r.seed!==t.seed).length>0&&<details><summary>历史复盘（本机保留最近 20 手）</summary>{reviews.filter(r=>r.hand!==t.hand||r.seed!==t.seed).slice().reverse().map(r=><React.Fragment key={`${r.seed}-${r.hand}`}>{review(r)}</React.Fragment>)}</details>}
- </Page></div>{practice&&<Drill initialIds={practice.ids} sourceLabel={practice.label} back={()=>setPractice(null)}/>}</>
+ </Page></div>{practice&&<Drill initialIds={practice.ids} sourceLabel={practice.label} returnLabel="本手复盘" back={()=>setPractice(null)}/>}</>
 }
