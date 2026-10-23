@@ -16,7 +16,7 @@ function ended(t:TableState){while(!t.handOver)t=applyAction(t,t.actor,legalActi
 beforeEach(()=>{vi.useFakeTimers();localStorage.clear();(globalThis as any).IS_REACT_ACT_ENVIRONMENT=true;el=document.createElement('div');document.body.append(el);root=createRoot(el)});
 afterEach(async()=>{await act(async()=>root.unmount());el.remove();vi.restoreAllMocks();vi.useRealTimers()});
 describe('整场比赛实际界面',()=>{
- it('自动接下一手、暂停与刷新不重复扣盲',async()=>{await mount(ended(initialTable()));await confirm();await click('开始 / 继续');await tick(2100);expect(stored().hand).toBe(2);await click('暂停学习');const before=stored();await tick(10000);expect(stored()).toEqual(before);await act(async()=>root.unmount());root=createRoot(el);await mount(before);await tick(5000);expect(stored()).toEqual(before);expect(el.textContent).toContain('已暂停')});
+ it('自动接下一手、暂停与刷新不重复扣盲',async()=>{await mount(ended(initialTable()));await confirm();await act(async()=>{(el.querySelectorAll('input[type=checkbox]')[0] as HTMLInputElement).click()});await click('开始 / 继续');await tick(2100);expect(stored().hand).toBe(2);await click('暂停学习');const before=stored();await tick(10000);expect(stored()).toEqual(before);await act(async()=>root.unmount());root=createRoot(el);await mount(before);await tick(5000);expect(stored()).toEqual(before);expect(el.textContent).toContain('已暂停')});
  it('到点显示最后一手，结算前无结果，结束后停止自动发牌',async()=>{const t=initialTable();t.elapsed=3599;t.actor=0;t.players.slice(1).forEach(p=>p.folded=true);await mount(t);await confirm();await click('开始 / 继续');await tick(1250);expect(el.textContent).toContain('最后一手进行中');expect(el.querySelector('[aria-label="比赛最终结果"]')).toBeNull();await click('跟注补');expect(el.textContent).toContain('60 分钟到点，最后一手已结算');expect(el.textContent).toContain('最终排名');const end=stored();await tick(10000);expect(stored()).toEqual(end);expect((el.querySelector('.next-hand') as HTMLButtonElement).disabled).toBe(true);expect(JSON.parse(localStorage.getItem('holdem-match-results')!)).toHaveLength(1)});
  it('恢复已结束比赛直接显示结果，并列积分不分配',async()=>{const t=ended(initialTable());t.elapsed=3600;t.players.forEach(p=>p.chips=1000);await mount(t);expect(el.textContent).toContain('积分待确认');expect(el.querySelectorAll('.match-result tbody tr')).toHaveLength(9);expect(el.textContent).toContain('并列第 1 名');await tick(5000);expect(stored().hand).toBe(t.hand)});
 });
@@ -28,8 +28,8 @@ describe('新手逐步操作与四轮下注',()=>{
   expect(el.querySelector('[aria-label="下一步指引"]')?.textContent).toContain('先勾选');
   expect([...el.querySelectorAll('button')].find(b=>b.textContent==='开始 / 继续')?.disabled).toBe(true);
   await confirm();await click('开始 / 继续');
-  // Stop between hands so each street and the review can be inspected.
-  await act(async()=>{(el.querySelectorAll('input[type=checkbox]')[0] as HTMLInputElement).click()});
+  // Manual continuation is the learning default.
+  expect((el.querySelectorAll('input[type=checkbox]')[0] as HTMLInputElement).checked).toBe(false);
   const streets=new Set<string>();let actions=0;
   for(let n=0;n<100&&!stored().handOver;n++){
    const t=stored();streets.add(t.street);
@@ -63,7 +63,7 @@ describe('六种合法动作逐项验收',()=>{
    }
    await mount(t);await confirm();await click('开始 / 继续');
    const labels={fold:'弃牌 ·',call:'跟注补',raise:'加注到',allin:'全下 ',check:'过牌 ·',bet:'下注到'};
-   await click(labels[action]);
+   await click(labels[action]);if(action==='allin'){expect(stored().decisions.length).toBe(t.decisions.length);await click('确认全下 1000');}
    const after=stored();const ds=after.decisions.filter(d=>d.player===0);const d=ds[ds.length-1];
    expect(d?.action).toBe(action);expect(after.pot+after.players.reduce((n,p)=>n+p.chips,0)).toBe(9000);
    expect(after.decisions.length).toBe(t.decisions.length+1);
@@ -71,4 +71,16 @@ describe('六种合法动作逐项验收',()=>{
    if(action==='allin')expect(after.players[0].chips).toBe(0);
   });
  }
+});
+
+describe('操作减负与防误触',()=>{
+ it('快捷金额只填值，全下取消不扣钱，确认才执行',async()=>{
+  let t=initialTable(456);while(t.actor!==0)t=applyAction(t,t.actor,legalActions(t).includes('check')?'check':'call');
+  await mount(t);await confirm();await click('开始 / 继续');const before=stored();
+  await click('半池 ·');expect(stored().decisions).toEqual(before.decisions);
+  expect((el.querySelector('input[type=number]') as HTMLInputElement).value).toBe('105');
+  expect(el.textContent).toContain('操作后剩余 895');
+  await click('全下 1000');await click('取消全下');expect(stored().players[0].chips).toBe(1000);
+  await click('全下 1000');await click('确认全下 1000');expect(stored().players[0].chips).toBe(0);
+ });
 });

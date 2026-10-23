@@ -1,0 +1,8 @@
+// @vitest-environment jsdom
+import React,{act} from 'react';import{createRoot,Root}from'react-dom/client';import{beforeEach,afterEach,it,expect}from'vitest';import{Drill,loadProgress}from'./Drill';import{drills}from'./engine';
+let el:HTMLDivElement,root:Root;
+beforeEach(()=>{localStorage.clear();(globalThis as any).IS_REACT_ACT_ENVIRONMENT=true;el=document.createElement('div');document.body.append(el);root=createRoot(el)});afterEach(async()=>{await act(async()=>root.unmount());el.remove()});
+async function mount(){await act(async()=>root.render(<Drill back={()=>{}}/>))}async function click(text:string){const b=[...el.querySelectorAll('button')].find(b=>b.textContent?.includes(text));expect(b).toBeTruthy();await act(async()=>b!.click())}
+it('退出前立即保存错题，恢复后能重练并移出',async()=>{await mount();await click('跟注');expect(loadProgress().wrong).toEqual([0]);await act(async()=>root.unmount());root=createRoot(el);await mount();await click('重练错题');await click('过牌');expect(loadProgress().wrong).toEqual([]);await click('查看本组结果');expect(el.textContent).toContain('本组练习完成')});
+it('20道题完整有限结束，公式与关键答案符合独立计算',()=>{expect(drills).toHaveLength(20);for(const q of drills){expect(q[3]).toBeGreaterThanOrEqual(0);expect(q[3]).toBeLessThan(q[2].length)}expect((9/47*100).toFixed(1)).toBe('19.1');expect(((1-38/47*37/46)*100).toFixed(1)).toBe('35.0');expect((8/46*100).toFixed(1)).toBe('17.4');expect(drills[16][2][drills[16][3]]).toBe('退回你')});
+it('按界面连续完成20题后显示结果而非无限循环',async()=>{await mount();for(let n=0;n<drills.length;n++){await click(drills[n][2][drills[n][3]]);await click(n===drills.length-1?'查看本组结果':'下一题')}expect(el.textContent).toContain('本组练习完成');expect(Object.keys(loadProgress().answered)).toHaveLength(20);expect(loadProgress().wrong).toEqual([])});
