@@ -17,3 +17,7 @@ describe('关键决策内容',()=>{
   expect(decisionTakeaways([{...d('call',50),eligiblePotBefore:undefined} as unknown as Decision])[0].body).toContain('25.0%');
  });
 });
+it('重点练习跟随筛选后的高优先级决策，未混入无关前序动作',()=>{
+ const tips=decisionTakeaways([d('check'),d('allin',800),d('call',50)]);
+ expect(tips[0].practiceIds).toEqual([14,7]);expect(tips[1].practiceIds).toEqual([5,13]);
+});
